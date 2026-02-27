@@ -9,10 +9,12 @@
 # from datetime import datetime
 
 from django.http import JsonResponse
-from django.contrib.auth import login, authenticate
-import logging
+from django.contrib.auth import login, authenticate, logoutimport logging
+from django.contrib.auth.models import User
 import json
 from django.views.decorators.csrf import csrf_exempt
+import logging
+
 # from .populate import initiate
 
 
@@ -40,13 +42,49 @@ def login_user(request):
 
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
-# ...
+
+@csrf_exempt
+def logout_request(request):
+    # Terminate the user session
+    logout(request)
+
+    # Return empty username after logout
+    data = {"userName": ""}
+    return JsonResponse(data)
 
 # Create a `registration` view to handle sign up request
-# @csrf_exempt
-# def registration(request):
-# ...
+@csrf_exempt
+def registration(request):
+    # Load JSON data from request body
+    data = json.loads(request.body)
+    username = data.get('userName')
+    password = data.get('password')
+    first_name = data.get('firstName', '')
+    last_name = data.get('lastName', '')
+    email = data.get('email', '')
 
+    # Check if username already exists
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"userName": username, "error": "Already Registered"})
+
+    # Optional: check if email already exists
+    if email and User.objects.filter(email=email).exists():
+        return JsonResponse({"userName": username, "error": "Email Already Registered"})
+
+    # Create user
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        email=email
+    )
+
+    # Login the user
+    login(request, user)
+
+    # Return JSON response
+    return JsonResponse({"userName": username, "status": "Authenticated"})
 # # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
 # def get_dealerships(request):
