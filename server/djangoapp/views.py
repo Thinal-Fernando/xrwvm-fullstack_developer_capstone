@@ -19,7 +19,7 @@ from .restapis import get_request,  post_review
 
 
 
-# from .populate import initiate
+from .populate import initiate
 
 
 # Get an instance of a logger
@@ -140,12 +140,13 @@ def add_review(request):
 
 
 def get_cars(request):
-    count = CarMake.objects.filter().count()
-    print(count)
-    if(count == 0):
+    if CarMake.objects.count() == 0:
+        print("Initiating car data...")
         initiate()
+        print("Initiation done.")
+    
     car_models = CarModel.objects.select_related('car_make')
-    cars = []
-    for car_model in car_models:
-        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
-    return JsonResponse({"CarModels":cars})
+    print("Car models count:", car_models.count())
+    
+    cars = [{"CarModel": cm.name, "CarMake": cm.car_make.name} for cm in car_models]
+    return JsonResponse({"CarModels": cars})

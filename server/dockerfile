@@ -1,0 +1,32 @@
+FROM python:3.12.0-slim-bookworm
+
+# Prevent Python from buffering stdout/stderr
+ENV PYTHONUNBUFFERED 1
+# Prevent Python from writing .pyc files
+ENV PYTHONDONTWRITEBYTECODE 1
+
+# Set the app directory
+ENV APP=/app
+
+# Set the working directory
+WORKDIR $APP
+
+# Copy requirements and install dependencies
+COPY requirements.txt $APP
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+# Copy the rest of the application code
+COPY . $APP
+
+# Expose the port your app will run on
+EXPOSE 8000
+
+# Make entrypoint script executable (if you have one)
+RUN chmod +x /app/entrypoint.sh
+
+# Use entrypoint script if needed
+ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
+
+# Default command to start the app with Gunicorn
+CMD ["gunicorn", "--bind", ":8000", "--workers", "3", "djangoproj.wsgi"]
